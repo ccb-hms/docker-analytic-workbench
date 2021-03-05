@@ -17,7 +17,7 @@ docker run --rm --name workbench -d -v /SOME_LOCAL_PATH:/HostData \
                             -p 2200:22 \
                             -e CONTAINER_USER_USERNAME=REPLACE_ME_USERNAME \
                             -e CONTAINER_USER_PASSWORD=REPLACE_ME_PASSWORD \
-                            hmsccb/AnalyticWorkbench:version-1.0.0
+                            hmsccb/AnalyticWorkbench:latest
 ```
 
 ## Parameters
@@ -131,7 +131,7 @@ connect to the container.
 A final option is to run the container in a way that directly presents the user with an interactive R session. The container will stop after you quit this R session. Note, this command runs the container so you can't already have one running when issuing it. The --rm flag will ensure that when the R session is quit, the container is stopped and cleaned up.
 
 ```bash
-docker run --name workbench -v /SOME_LOCAL_PATH:/HostData --rm -it hmsccb/AnalyticWorkbench:version-1.0.0 R
+docker run --name workbench -v /SOME_LOCAL_PATH:/HostData --rm -it hmsccb/AnalyticWorkbench:latest R
 ```
 
 ## Restarting R Studio Server
