@@ -246,7 +246,7 @@ RUN R -e "install.packages('tidyr')"
 RUN R -e "install.packages('stringr')"
 RUN R -e "install.packages('survival')"
 
-## install RStudio Server / notebooks
+## install RStudio Server
 RUN mkdir /opt/rstudioserver
 WORKDIR /opt/rstudioserver
 
@@ -267,10 +267,6 @@ WORKDIR /HostData
 
 # Copy RStudio Config
 COPY rserver.conf /etc/rstudio/rserver.conf
-
-## install R package with utility functions for Phase 2 projects
-RUN R -e "devtools::install_github('https://github.com/covidclinical/Phase2.1UtilitiesRPackage', subdir='FourCePhase2.1Utilities', upgrade=FALSE)"
-RUN R -e "devtools::install_github('https://github.com/covidclinical/Phase2.1DataRPackage', subdir='FourCePhase2.1Data', upgrade=FALSE)"
 
 ## tell git to use the cache credential helper and set a 1 day-expiration
 RUN git config --system credential.helper 'cache --timeout 86400'
