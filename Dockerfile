@@ -229,7 +229,7 @@ RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/SqlTo
 
 RUN chmod 777 /opt/microsoft/ropen/$MRO_VERSION/lib64/R/library
 
-## customization for 4CE Phase 2.0
+## additional R packages
 RUN R -e "install.packages('data.table')"
 RUN R -e "install.packages('dplyr')"
 RUN R -e "install.packages('exactmeta')"
@@ -260,8 +260,8 @@ RUN mkdir /startup
 COPY startup.sh /startup/startup.sh
 RUN chmod 700 /startup/startup.sh
 
-RUN mkdir /4ceData
-WORKDIR /4ceData
+RUN mkdir /HostData
+WORKDIR /HostData
 
 ## Lock the default user from analysis docker
 RUN usermod -L dockeruser
