@@ -73,8 +73,8 @@ WORKDIR /tmp
 RUN rm microsoft-r-open-*.tar.gz \
 	&& rm -r microsoft-r-open
 
-# Use libcurl for download, otherwise problems with tar files
-RUN echo 'options("download.file.method" = "libcurl")' >> /opt/microsoft/ropen/$MRO_VERSION/lib64/R/etc/Rprofile.site
+# problems with devtools::install_github aimed at HTTPS connections had problems with libcurl
+RUN echo 'options("download.file.method" = "wget")' >> /opt/microsoft/ropen/$MRO_VERSION/lib64/R/etc/Rprofile.site
 
 RUN chmod 777 /tmp
 
@@ -286,9 +286,6 @@ RUN R -e "install.packages('icd')"
 
 ## related to https://github.com/r-lib/devtools/issues/2309
 RUN R --vanilla -e "options(repos = c(CRAN = 'https://cran.microsoft.com/snapshot/2021-01-29')); install.packages('testthat')"
-
-# problems with devtools::install_github aimed at HTTPS connections had problems with libcurl
-RUN echo 'options("download.file.method" = "wget")' >> /opt/microsoft/ropen/$MRO_VERSION/lib64/R/etc/Rprofile.site
 
 ## allow modification of these locations so users can install R packages without warnings
 RUN chmod -R 777 /opt/microsoft/ropen/$MRO_VERSION/lib64/R/library
