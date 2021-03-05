@@ -290,7 +290,7 @@ RUN R --vanilla -e "options(repos = c(CRAN = 'https://cran.microsoft.com/snapsho
 # problems with devtools::install_github aimed at HTTPS connections had problems with libcurl
 RUN echo 'options("download.file.method" = "wget")' >> /opt/microsoft/ropen/$MRO_VERSION/lib64/R/etc/Rprofile.site
 
-## allow anyone to write system R libraries
+## allow modification of these locations so users can install R packages without warnings
 RUN chmod -R 777 /opt/microsoft/ropen/$MRO_VERSION/lib64/R/library
 RUN chmod -R 777 /opt/microsoft/ropen/$MRO_VERSION/lib64/R/doc/html/packages.html
 
