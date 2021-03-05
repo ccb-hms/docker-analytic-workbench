@@ -83,10 +83,11 @@ RUN apt-get update && apt-get install -y \
 	unixodbc \
 	unixodbc-dev
 
-## install MS SQL Server ODBC driver
+## install MS SQL Server ODBC driver prerequisites
 RUN apt-get update \
 	&& apt-get install -y gnupg
 
+## install MS SQL Server ODBC driver
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
 	&& echo "deb [arch=amd64] https://packages.microsoft.com/ubuntu/18.04/prod bionic main" | tee /etc/apt/sources.list.d/mssql-release.list \
 	&& apt-get update \
@@ -97,7 +98,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
 	&& apt-get install -y krb5-user
 
-## install FreeTDS driver, since there is some legacy Python code around that needs it
+## install FreeTDS driver
 RUN wget ftp://ftp.freetds.org/pub/freetds/stable/freetds-1.1.40.tar.gz
 RUN tar zxvf freetds-1.1.40.tar.gz
 RUN cd freetds-1.1.40 && ./configure && make && make install
@@ -204,6 +205,7 @@ RUN apt-get update && apt-get install -y \
 ## install editors
 RUN apt-get update && apt-get install -y \
 	nano \
+	emacs \
 	vim
 
 ## configure X11 so we can e.g. create plots in R over SSH
@@ -262,11 +264,6 @@ RUN chmod 700 /startup/startup.sh
 
 RUN mkdir /HostData
 WORKDIR /HostData
-
-## Lock the default user from analysis docker
-RUN usermod -L dockeruser
-RUN chage -E0 dockeruser
-RUN usermod -s /sbin/nologin dockeruser
 
 # Copy RStudio Config
 COPY rserver.conf /etc/rstudio/rserver.conf
