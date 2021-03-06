@@ -170,14 +170,48 @@ RUN Rscript -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.pa
 RUN Rscript -e 'BiocManager::install(version = "3.12", update=FALSE, ask=FALSE)'
 RUN R -e "install.packages('getPass')"
 RUN R -e "install.packages('xlsx')"
+RUN R -e "install.packages('data.table')"
+RUN R -e "options(repos = c(CRAN = 'https://cran.microsoft.com/snapshot/2021-01-29')); install.packages('dplyr')"
+RUN R -e "install.packages('exactmeta')"
+RUN R -e "install.packages('fmsb')"
+RUN R -e "install.packages('forestplot')"
+RUN R -e "install.packages('httr')"
+RUN R -e "install.packages('lme4')"
+RUN R -e "install.packages('metafor')"
+RUN R -e "install.packages('rtf')"
+RUN R -e "install.packages('splines')"
+RUN R -e "install.packages('tidyr')"
+RUN R -e "install.packages('stringr')"
+RUN R -e "install.packages('survival')"
+RUN R -e "install.packages('np')"
+RUN R -e "install.packages('codetools')"
+RUN R -e "install.packages('glmnet')"
+RUN R -e "install.packages('glmpath')"
+RUN R -e "install.packages('lars')"
+RUN R -e "install.packages('zoo')"
+RUN R --vanilla -e "options(repos = c(CRAN = 'https://cran.microsoft.com/snapshot/2021-01-29')); install.packages('lme4')"
+RUN R -e "install.packages('icd')"
 
-## install python and pip
-RUN apt-get update && apt-get -y install \
-    python3-pip
+## related to https://github.com/r-lib/devtools/issues/2309
+RUN R --vanilla -e "options(repos = c(CRAN = 'https://cran.microsoft.com/snapshot/2021-01-29')); install.packages('testthat')"
+
+## there is an issue where the R package thinks that the certificate is in the .../ropen/4.0.0/... directory
+ENV CURL_CA_BUNDLE=/opt/microsoft/ropen/4.0.2/lib64/R/lib/microsoft-r-cacert.pem
+RUN Rscript -e "remove.packages(c('curl','httr'))"
+RUN Rscript -e "install.packages(c('curl', 'httr'))"
+
+# install our R packages for connecting to SQL Server and working with resulting data sets
+RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/FactToCube.git')"
+RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/MsSqlTools.git')"
+RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/SqlTools.git')"
 
 ## install odbc connector for R
 RUN R -e "options(repos = c(CRAN = 'https://cran.microsoft.com/snapshot/2021-01-29')); install.packages('DBI')"
 RUN R -e "options(repos = c(CRAN = 'https://cran.microsoft.com/snapshot/2021-01-29')); install.packages('odbc')"
+
+## install python and pip
+RUN apt-get update && apt-get -y install \
+    python3-pip
 
 ## install pyodbc
 RUN pip3 install pyodbc
@@ -219,49 +253,25 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && apt-get install -y \
 	zsh
 
-## there is an issue where the R package thinks that the certificate is in the .../ropen/4.0.0/... directory
-ENV CURL_CA_BUNDLE=/opt/microsoft/ropen/4.0.2/lib64/R/lib/microsoft-r-cacert.pem
-RUN Rscript -e "remove.packages(c('curl','httr'))"
-RUN Rscript -e "install.packages(c('curl', 'httr'))"
-
-# ## clone our git repo that has the SQL Server connection helper code for R and install the package
-RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/FactToCube.git')"
-RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/MsSqlTools.git')"
-RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/SqlTools.git')"
-
 RUN chmod 777 /opt/microsoft/ropen/$MRO_VERSION/lib64/R/library
-
-## additional R packages
-RUN R -e "install.packages('data.table')"
-RUN R -e "install.packages('dplyr')"
-RUN R -e "install.packages('exactmeta')"
-RUN R -e "install.packages('fmsb')"
-RUN R -e "install.packages('forestplot')"
-RUN R -e "install.packages('httr')"
-RUN R -e "install.packages('lme4')"
-RUN R -e "install.packages('metafor')"
-RUN R -e "install.packages('rtf')"
-RUN R -e "install.packages('splines')"
-RUN R -e "install.packages('tidyr')"
-RUN R -e "install.packages('stringr')"
-RUN R -e "install.packages('survival')"
 
 ## install RStudio Server
 RUN mkdir /opt/rstudioserver
 WORKDIR /opt/rstudioserver
 
-RUN wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl1.0/libssl1.0.0_1.0.2n-1ubuntu5.5_amd64.deb
-RUN dpkg -i ./libssl1.0.0_1.0.2n-1ubuntu5.5_amd64.deb
+RUN wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl1.0/libssl1.0.0_1.0.2n-1ubuntu5.6_amd64.deb
+RUN dpkg -i ./libssl1.0.0_1.0.2n-1ubuntu5.6_amd64.deb
 
 RUN apt-get update && apt-get install -y gdebi-core
 RUN wget https://download2.rstudio.org/server/bionic/amd64/rstudio-server-1.4.1106-amd64.deb
 RUN gdebi rstudio-server-1.4.1106-amd64.deb
 
-## Copy startup script.
+## Copy startup script
 RUN mkdir /startup
 COPY startup.sh /startup/startup.sh
 RUN chmod 700 /startup/startup.sh
 
+## Create a mount point for host filesystem data
 RUN mkdir /HostData
 WORKDIR /HostData
 
@@ -270,22 +280,6 @@ COPY rserver.conf /etc/rstudio/rserver.conf
 
 ## tell git to use the cache credential helper and set a 1 day-expiration
 RUN git config --system credential.helper 'cache --timeout 86400'
-
-## need newer version of dplyr
-RUN R -e "options(repos = c(CRAN = 'https://cran.microsoft.com/snapshot/2021-01-29')); install.packages('dplyr')"
-
-## additional dependencies 2021-02-01
-RUN R -e "install.packages('np')"
-RUN R -e "install.packages('codetools')"
-RUN R -e "install.packages('glmnet')"
-RUN R -e "install.packages('glmpath')"
-RUN R -e "install.packages('lars')"
-RUN R -e "install.packages('zoo')"
-RUN R --vanilla -e "options(repos = c(CRAN = 'https://cran.microsoft.com/snapshot/2021-01-29')); install.packages('lme4')"
-RUN R -e "install.packages('icd')"
-
-## related to https://github.com/r-lib/devtools/issues/2309
-RUN R --vanilla -e "options(repos = c(CRAN = 'https://cran.microsoft.com/snapshot/2021-01-29')); install.packages('testthat')"
 
 ## allow modification of these locations so users can install R packages without warnings
 RUN chmod -R 777 /opt/microsoft/ropen/$MRO_VERSION/lib64/R/library
