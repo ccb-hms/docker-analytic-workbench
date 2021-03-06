@@ -264,7 +264,7 @@ RUN dpkg -i ./libssl1.0.0_1.0.2n-1ubuntu5.6_amd64.deb
 
 RUN apt-get update && apt-get install -y gdebi-core
 RUN wget https://download2.rstudio.org/server/bionic/amd64/rstudio-server-1.4.1106-amd64.deb
-RUN gdebi rstudio-server-1.4.1106-amd64.deb
+RUN gdebi --non-interactive rstudio-server-1.4.1106-amd64.deb
 
 ## Copy startup script
 RUN mkdir /startup
