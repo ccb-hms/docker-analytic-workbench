@@ -242,7 +242,6 @@ RUN Rscript -e "install.packages('DBI')"
 RUN Rscript -e "install.packages('odbc')"
 RUN Rscript -e "install.packages('caret')"
 RUN Rscript -e "install.packages('icd.data')"
-RUN Rscript -e "install.packages('survminer')"
 RUN Rscript -e "install.packages('broom')"
 
 # this one is missing from the 2021-01-29 snapshot, so rever to default for this MRO 4.0.2
@@ -250,6 +249,7 @@ RUN Rscript -e "install.packages('icd', repos='https://cran.microsoft.com/snapsh
 
 # -- vanilla because there is a bug that causes the R intro / preamble text to get pushed into the compiler
 RUN Rscript --vanilla -e "install.packages('lme4', repos='https://cran.microsoft.com/snapshot/2021-01-29')"
+RUN Rscript --vanilla -e "install.packages('survminer', repos='https://cran.microsoft.com/snapshot/2021-01-29')"
 
 # install R packages for connecting to SQL Server and working with resulting data sets
 RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/FactToCube.git')"
