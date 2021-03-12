@@ -20,6 +20,10 @@ docker run --rm --name workbench -d -v /SOME_LOCAL_PATH:/HostData \
                             hmsccb/AnalyticWorkbench:latest
 ```
 
+Alternatively, clone this Git repository and:
+
+``docker build --progress=plain --tag hmsccb/analyticworkbench:development .``
+
 ## Parameters
 
 ### Bind Mount Volume /SOME_LOCAL_PATH
