@@ -242,7 +242,9 @@ RUN Rscript -e "install.packages('DBI')"
 RUN Rscript -e "install.packages('odbc')"
 RUN Rscript -e "install.packages('caret')"
 RUN Rscript -e "install.packages('icd.data')"
-RUN Rscript -e "install.packages('broom')"
+
+# need a newer version
+RUN Rscript -e "install.packages('broom', repos='https://cran.microsoft.com/snapshot/2021-03-01/')"
 
 # this one is missing from the 2021-01-29 snapshot, so rever to default for this MRO 4.0.2
 RUN Rscript -e "install.packages('icd', repos='https://cran.microsoft.com/snapshot/2020-07-16')"
