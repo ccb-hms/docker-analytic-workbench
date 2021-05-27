@@ -86,6 +86,9 @@ RUN apt-get update \
 		python3-pip \
 		alien \
 		libaio1 \
+		pkg-config \ 
+		libkrb5-dev \
+		unzip \
 	&& rm -rf /var/lib/apt/lists/*
 
 
@@ -119,7 +122,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
 WORKDIR /tmp
 RUN wget ftp://ftp.freetds.org/pub/freetds/stable/freetds-1.1.40.tar.gz
 RUN tar zxvf freetds-1.1.40.tar.gz
-RUN cd freetds-1.1.40 && ./configure && make && make install
+RUN cd freetds-1.1.40 && ./configure --enable-krb5 && make && make install
 RUN rm -r /tmp/freetds*
 
 # tell unixodbc where to find the FreeTDS driver shared object
@@ -308,5 +311,8 @@ RUN chmod 700 /startup/startup.sh
 
 # Create a mount point for host filesystem data
 RUN mkdir /HostData
+
+# Set default kerberos configuration
+COPY krb5.conf /etc/krb5.conf
 
 CMD ["/startup/startup.sh"]
