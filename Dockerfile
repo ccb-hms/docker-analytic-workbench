@@ -257,9 +257,9 @@ RUN Rscript --vanilla -e "install.packages('lme4', repos='https://cran.microsoft
 RUN Rscript --vanilla -e "install.packages('survminer', repos='https://cran.microsoft.com/snapshot/2021-01-29')"
 
 # install R packages for connecting to SQL Server and working with resulting data sets
-RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/FactToCube.git')"
-RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/MsSqlTools.git')"
-RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/SqlTools.git')"
+RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/FactToCube.git', ref='v1.0.0')"
+RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/MsSqlTools.git', ref='v1.0.0')"
+RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/SqlTools.git', ref='v1.0.0')"
 
 # the following steps are needed for Roracle package
 RUN mkdir $ORACLE_HOME/rdbms \
