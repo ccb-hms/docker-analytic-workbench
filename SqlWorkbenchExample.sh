@@ -1,0 +1,11 @@
+docker run --rm --name workbench -d \
+    -v /tmp:/HostData \
+    -p 8787:8787 \                          # RStudio Server port
+    -p 2200:22 \                            # SSH port
+    -p 1433:1433 \                          # SQL Server port
+    -e CONTAINER_USER_USERNAME=user \       # linux / RStudio user name
+    -e CONTAINER_USER_PASSWORD=password \   # password for linux / RStudio user
+    -e 'ACCEPT_EULA=Y' \                    # required for SQL Server
+    -e 'SA_PASSWORD=password' \             # SQL Server 'sa' password, see https://hub.docker.com/_/microsoft-mssql-server
+    --privileged \                          # to allow SMB mounts in the container
+    -d sqlserverworkbench
