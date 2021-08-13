@@ -2,11 +2,13 @@
 # Data Science Workbench Image
 #
 
-FROM ubuntu:20.04
+FROM mcr.microsoft.com/mssql/server:2019-CU12-ubuntu-20.04
 
 #------------------------------------------------------------------------------
 # Basic initial system configuration
 #------------------------------------------------------------------------------
+
+USER root
 
 # install standard Ubuntu Server packages
 RUN yes | unminimize

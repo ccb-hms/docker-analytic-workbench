@@ -18,5 +18,6 @@ else
     usermod -a -G rstudio-users $CONTAINER_USER_USERNAME
 fi
 
+runuser -m -p  mssql -c '/opt/mssql/bin/sqlservr &'
 /usr/sbin/rstudio-server restart
 /usr/sbin/sshd -D
