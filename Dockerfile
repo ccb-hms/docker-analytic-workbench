@@ -191,7 +191,8 @@ WORKDIR /tmp
 RUN rm -r /tmp/mro
 
 # set CRAN repository snapshot for standard package installs
-RUN echo 'options(repos = c(CRAN = "https://cran.microsoft.com/snapshot/2021-01-29"))' >> /opt/microsoft/ropen/$MRO_VERSION/lib64/R/etc/Rprofile.site
+ENV R_REPOSITORY=https://cran.microsoft.com/snapshot/2021-08-16
+RUN echo 'options(repos = c(CRAN = "'$R_REPOSITORY'"))' >> /opt/microsoft/ropen/$MRO_VERSION/lib64/R/etc/Rprofile.site
 
 # tell R to use wget (devtools::install_github aimed at HTTPS connections had problems with libcurl)
 RUN echo 'options("download.file.method" = "wget")' >> /opt/microsoft/ropen/$MRO_VERSION/lib64/R/etc/Rprofile.site
@@ -206,57 +207,58 @@ RUN Rscript -e "install.packages(c('curl', 'httr'))"
 # Install R packages
 #------------------------------------------------------------------------------
 
+# use the remotes package to manage installations
+RUN Rscript -e "install.packages('remotes')"
+
 # configure and install rJava
 RUN R CMD javareconf
-RUN Rscript -e "install.packages('rJava', type='source')"
+RUN Rscript -e "remotes::install_cran('rJava', type='source')"
 
 # install devtools, which for some reason depends on shiny
-RUN Rscript -e "install.packages('shiny')"
-RUN Rscript -e "install.packages('devtools')"
+RUN Rscript -e "remotes::install_cran('shiny')"
+RUN Rscript -e "remotes::install_cran('devtools')"
 
 # install BioConductor
-RUN Rscript -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")'
-RUN Rscript -e 'BiocManager::install(version = "3.12", update=FALSE, ask=FALSE)'
+RUN Rscript -e "if (!requireNamespace('BiocManager', quietly = TRUE)) remotes::install_cran('BiocManager')"
+RUN Rscript -e "BiocManager::install(version = '3.12', update=FALSE, ask=FALSE)"
 
 # install standard data science and bioinformatics packages
-RUN Rscript -e 'install.packages("Rcpp")'
-RUN Rscript -e 'install.packages("roxygen2")'
-RUN Rscript -e 'install.packages("tidyverse")'
-RUN Rscript -e 'install.packages("git2r")'
-RUN Rscript -e "install.packages('getPass')"
-RUN Rscript -e "install.packages('xlsx')"
-RUN Rscript -e "install.packages('data.table')"
-RUN Rscript -e "install.packages('dplyr')"
-RUN Rscript -e "install.packages('exactmeta')"
-RUN Rscript -e "install.packages('fmsb')"
-RUN Rscript -e "install.packages('forestplot')"
-RUN Rscript -e "install.packages('metafor')"
-RUN Rscript -e "install.packages('rtf')"
-RUN Rscript -e "install.packages('splines')"
-RUN Rscript -e "install.packages('tidyr')"
-RUN Rscript -e "install.packages('stringr')"
-RUN Rscript -e "install.packages('survival')"
-RUN Rscript -e "install.packages('np')"
-RUN Rscript -e "install.packages('codetools')"
-RUN Rscript -e "install.packages('glmnet')"
-RUN Rscript -e "install.packages('glmpath')"
-RUN Rscript -e "install.packages('lars')"
-RUN Rscript -e "install.packages('zoo')"
-RUN Rscript -e "install.packages('testthat')"
-RUN Rscript -e "install.packages('DBI')"
-RUN Rscript -e "install.packages('odbc')"
-RUN Rscript -e "install.packages('caret')"
-RUN Rscript -e "install.packages('icd.data')"
+RUN Rscript -e "remotes::install_cran('Rcpp')"
+RUN Rscript -e "remotes::install_cran('roxygen2')"
+RUN Rscript -e "remotes::install_cran('tidyverse')"
+RUN Rscript -e "remotes::install_cran('git2r')"
+RUN Rscript -e "remotes::install_cran('getPass')"
+RUN Rscript -e "remotes::install_cran('xlsx')"
+RUN Rscript -e "remotes::install_cran('data.table')"
+RUN Rscript -e "remotes::install_cran('dplyr')"
+RUN Rscript -e "remotes::install_cran('exactmeta')"
+RUN Rscript -e "remotes::install_cran('fmsb')"
+RUN Rscript -e "remotes::install_cran('forestplot')"
+RUN Rscript -e "remotes::install_cran('metafor')"
+RUN Rscript -e "remotes::install_cran('rtf')"
+RUN Rscript -e "remotes::install_cran('splines')"
+RUN Rscript -e "remotes::install_cran('tidyr')"
+RUN Rscript -e "remotes::install_cran('stringr')"
+RUN Rscript -e "remotes::install_cran('survival')"
+RUN Rscript -e "remotes::install_cran('np')"
+RUN Rscript -e "remotes::install_cran('codetools')"
+RUN Rscript -e "remotes::install_cran('glmnet')"
+RUN Rscript -e "remotes::install_cran('glmpath')"
+RUN Rscript -e "remotes::install_cran('lars')"
+RUN Rscript -e "remotes::install_cran('zoo')"
+RUN Rscript -e "remotes::install_cran('testthat')"
+RUN Rscript -e "remotes::install_cran('DBI')"
+RUN Rscript -e "remotes::install_cran('odbc')"
+RUN Rscript -e "remotes::install_cran('caret')"
+RUN Rscript -e "remotes::install_cran('icd.data')"
+RUN Rscript -e "remotes::install_cran('broom')"
 
-# need a newer version
-RUN Rscript -e "install.packages('broom', repos='https://cran.microsoft.com/snapshot/2021-03-01/')"
-
-# this one is missing from the 2021-01-29 snapshot, so rever to default for this MRO 4.0.2
-RUN Rscript -e "install.packages('icd', repos='https://cran.microsoft.com/snapshot/2020-07-16')"
+# this one is missing from newer snapshots, so revert to default for this MRO 4.0.2
+RUN Rscript -e "remotes::install_cran('icd', repos='https://cran.microsoft.com/snapshot/2020-07-16')"
 
 # -- vanilla because there is a bug that causes the R intro / preamble text to get pushed into the compiler
-RUN Rscript --vanilla -e "install.packages('lme4', repos='https://cran.microsoft.com/snapshot/2021-01-29')"
-RUN Rscript --vanilla -e "install.packages('survminer', repos='https://cran.microsoft.com/snapshot/2021-01-29')"
+RUN Rscript --vanilla -e "remotes::install_cran('lme4', repos='"$R_REPOSITORY"')"
+RUN Rscript --vanilla -e "remotes::install_cran('survminer', repos='"$R_REPOSITORY"')"
 
 # install R packages for connecting to SQL Server and working with resulting data sets
 RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/FactToCube.git', ref='v1.0.0')"
@@ -270,7 +272,7 @@ RUN cp /usr/include/oracle/${ORACLE_RELEASE}.${ORACLE_UPDATE}/client64/* $ORACLE
     && chmod -R 777  $ORACLE_HOME/rdbms/public
 
 # install ROracle
-RUN Rscript -e "install.packages('ROracle')" 
+RUN Rscript -e "remotes::install_cran('ROracle')" 
 
  # allow modification of these locations so users can install R packages without warnings
 RUN chmod -R 777 /opt/microsoft/ropen/$MRO_VERSION/lib64/R/library
