@@ -91,6 +91,7 @@ RUN apt-get update \
 		pkg-config \ 
 		libkrb5-dev \
 		unzip \
+		cifs-utils \
 	&& rm -rf /var/lib/apt/lists/*
 
 
