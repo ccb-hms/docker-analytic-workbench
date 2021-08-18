@@ -58,7 +58,7 @@ docker \
 
 ### Environment Variables CONTAINER_USER_USERNAME and CONTAINER_USER_PASSWORD
 
-These are the username and password that will get created on the container, and will be used to connect to it via ssh, or to log into the R Studio Server Web UI.
+These are the username and password that will be created on the container. These credentials will be used to connect the running container via ssh, or to log into the R Studio Server Web UI.
 
 ### Environment Variables ACCEPT_EULA and SA_PASSWORD
 
