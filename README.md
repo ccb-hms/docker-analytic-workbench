@@ -25,7 +25,7 @@ docker \
         -e 'CONTAINER_USER_PASSWORD=password' \
         -e 'ACCEPT_EULA=Y' \
         -e 'SA_PASSWORD=yourStrong(!)Password' \
-        hmsccb/analytic-workbench:version-1.3.1
+        hmsccb/analytic-workbench:version-1.3.0
 ```
 
 Alternatively, clone the Git repository and:
