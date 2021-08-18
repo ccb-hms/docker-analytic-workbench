@@ -1,5 +1,5 @@
 # CCB Analytic Workbench
-This document describes the intended use of the CCB Analytic Workbench Docker image.  The container is preconfigured with R and Python and supporting packages, and is intended to serve as a base configuration for CCB's interactive analytic workbench.  It is preconfigured with RStudio Server, which runs at startup, along with an SSH server.  X11 is supported for graphical applications.
+This document describes the intended use of the CCB Analytic Workbench Docker image.  The container is preconfigured with R and Python and supporting packages, and is intended to serve as a base configuration for CCB's interactive analytic workbench.  It is preconfigured with RStudio Server, which runs at startup, along with an SSH server.  X11 is supported for graphical applications.  Microsoft SQL Server is also included, and can be optionally run at startup (see below).
 
 # Table of Contents
 
@@ -12,45 +12,41 @@ This document describes the intended use of the CCB Analytic Workbench Docker im
 To pull the image from DockerHub and run the container:
 
 ```bash
-docker 
-    run 
-        --rm 
-        --name workbench 
-        -d 
+docker \
+    run \
+        --rm \
+        --name workbench \
+        -d \
         -v /SOME_LOCAL_PATH:/HostData \
         -p 8787:8787 \
         -p 2200:22 \
         -p 1433:1433 \
-        -e CONTAINER_USER_USERNAME="REPLACE_ME_USERNAME" \
-        -e CONTAINER_USER_PASSWORD="REPLACE_ME_PASSWORD" \
-        -e ACCEPT_EULA="Y" \
-        -e SA_PASSWORD="yourStrong(!)Password" \
-        hmsccb/analytic-workbench:latest
+        -e 'CONTAINER_USER_USERNAME=user' \
+        -e 'CONTAINER_USER_PASSWORD=password' \
+        -e 'ACCEPT_EULA=Y' \
+        -e 'SA_PASSWORD=yourStrong(!)Password' \
+        hmsccb/analytic-workbench:version-1.2.1
 ```
 
-Alternatively, clone this Git repository and:
+Alternatively, clone the Git repository and:
 
 ```bash
 docker build --progress=plain --tag hmsccb/analyticworkbench:development .
-```
 
-Then: 
-
-```bash
-docker 
-    run 
-        --rm 
-        --name workbench 
-        -d 
+docker \
+    run \
+        --rm \
+        --name workbench \
+        -d \
         -v /SOME_LOCAL_PATH:/HostData \
         -p 8787:8787 \
         -p 2200:22 \
         -p 1433:1433 \
-        -e CONTAINER_USER_USERNAME="REPLACE_ME_USERNAME" \
-        -e CONTAINER_USER_PASSWORD="REPLACE_ME_PASSWORD" \
-        -e ACCEPT_EULA="Y" \
-        -e SA_PASSWORD="yourStrong(!)Password" \
-        hmsccb/analyticworkbench:development
+        -e 'CONTAINER_USER_USERNAME=user' \
+        -e 'CONTAINER_USER_PASSWORD=password' \
+        -e 'ACCEPT_EULA=Y' \
+        -e 'SA_PASSWORD=yourStrong(!)Password' \
+        hmsccb/analytic-workbench:development
 ```
 
 
@@ -66,7 +62,7 @@ These are the username and password that will get created on the container, and 
 
 ### Environment Variables ACCEPT_EULA and SA_PASSWORD
 
-This image is built on top of Microsoft's official container image for SQL Server on Linux. These arguments control configuration of the SQL Server instance. In order to start an instance of SQL Server in the container, ACCEPT_EULA must be set to "Y" and SA_PASSWORD must be set to a password of your choosing meeting minimum complexity requirements.  See https://hub.docker.com/_/microsoft-mssql-server for details.  If either of these conditions is not met, the container will run, but the SQL Server process will not start.
+This image is built on top of Microsoft's official container image for SQL Server on Linux. These arguments control configuration of the SQL Server instance. In order to start an instance of SQL Server in the container, ACCEPT_EULA must be set to "Y" and SA_PASSWORD must be set to a password of your choosing for the SQL Server 'sa' account meeting minimum complexity requirements.  See https://hub.docker.com/_/microsoft-mssql-server for details.  If either of these conditions is not met, the container will run, but the SQL Server process will not start.
 
 ### Port Mapping
 
