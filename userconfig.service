@@ -1,5 +1,5 @@
 [Unit]
-Description=Container initialization service
+Description=User configuration service
 After=network.target
 StartLimitIntervalSec=0
 [Service]

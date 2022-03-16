@@ -8,7 +8,7 @@ done
 # loop until we see user name and password available in the environment
 while [[ -z $CONTAINER_USER_USERNAME ]] || [[ -z $CONTAINER_USER_PASSWORD ]]
 do
-	sleep 0.5s
+	sleep 0.1s
 done
 
 # if username and password were not provided, exit.

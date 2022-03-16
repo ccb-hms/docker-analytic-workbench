@@ -96,6 +96,8 @@ RUN apt-get update \
 		libnlopt-dev \
 		libopenblas-openmp-dev \
 		libpcre2-dev \
+		systemd \
+		libcairo2-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
 
@@ -298,7 +300,9 @@ RUN chmod -R 777 $R_HOME/doc/html/packages.html
 # # Copy RStudio Config
 # COPY rserver.conf /etc/rstudio/rserver.conf
 
-# attempt build rstudio server from source
+#------------------------------------------------------------------------------
+
+# # attempt build rstudio server from source
 WORKDIR /tmp
 RUN wget https://github.com/rstudio/rstudio/tarball/v2022.02.0+443
 RUN tar zxvf v2022.02.0+443
@@ -311,9 +315,11 @@ RUN useradd -r rstudio-server
 RUN cp /usr/local/extras/init.d/debian/rstudio-server /etc/init.d/
 RUN update-rc.d rstudio-server defaults
 
+# tell R to use cairo for graphics so it works in RStudio Server front end
+RUN echo 'options(bitmapType="cairo")' >> $R_HOME/etc/Rprofile.site
 
 #------------------------------------------------------------------------------
-# Final odds and ends
+# Create a service to set up user / password passed at runtime
 #------------------------------------------------------------------------------
 
 # Copy userconfig script
@@ -321,27 +327,37 @@ RUN mkdir /userconfig
 COPY userconfig.sh /userconfig/userconfig.sh
 RUN chmod 700 /userconfig/userconfig.sh
 
+# create service to create user, etc
+COPY userconfig.service /etc/systemd/system/userconfig.service
+
+# enable the service to create the user, etc.
+RUN systemctl enable userconfig
+
+#------------------------------------------------------------------------------
+# Final odds and ends
+#------------------------------------------------------------------------------
+
 # Create a mount point for host filesystem data
 RUN mkdir /HostData
 
 # Set default kerberos configuration
 COPY krb5.conf /etc/krb5.conf
 
-RUN apt-get update \
-	&& apt-get install \
-		-y \
-		systemd
-
+# enable password authedtication over SSH
 RUN sed -i 's!^#PasswordAuthentication yes!PasswordAuthentication yes!' /etc/ssh/sshd_config
 RUN systemctl enable ssh.service
 EXPOSE 22
 
-# startup service to create user, etc
-COPY userconfig.service /etc/systemd/system/userconfig.service
-
-RUN systemctl enable userconfig
-
 CMD ["/usr/sbin/init"]
+
+
+# docker run --platform linux/arm64 --rm --name 4ce -d -v /tmp:/HostData \
+# 	--privileged \
+# 	-p 8787:8787 \
+# 	-p 2200:22 \
+# 	-e CONTAINER_USER_USERNAME=test \
+# 	-e CONTAINER_USER_PASSWORD=test \
+# 	workbench-multiarch-debug
 
 # # test to see if startup service works
 # systemctl enable userconfig
