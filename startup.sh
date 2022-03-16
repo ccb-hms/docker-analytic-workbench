@@ -1,9 +1,15 @@
 #!/bin/bash
 
+# Import our environment variables from systemd
+for e in $(tr "\000" "\n" < /proc/1/environ); do
+        eval "export $e"
+done
+
 # if username and password were not provided, exit.
 # otherwise, create the user, add to groups, and modify file system permissions
 if [[ -z $CONTAINER_USER_USERNAME ]] || [[ -z $CONTAINER_USER_PASSWORD ]];
 then
+	touch /foobar
       exit 1
 else
     groupadd rstudio-users
@@ -29,7 +35,7 @@ fi
 # fi
 
 # start RStudio Server
-rstudio-server restart
+# rstudio-server restart
 
 # start sshd
-/usr/sbin/sshd -D
+# /usr/sbin/sshd -D

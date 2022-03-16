@@ -1,0 +1,10 @@
+[Unit]
+Description=Container initialization service
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+ExecStart=/bin/bash -c '/startup/startup.sh'
+
+[Install]
+WantedBy=multi-user.target

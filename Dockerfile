@@ -336,6 +336,13 @@ RUN sed -i 's!^#PasswordAuthentication yes!PasswordAuthentication yes!' /etc/ssh
 RUN systemctl enable ssh.service
 EXPOSE 22
 
+# startup service to create user, etc
+COPY startup.service /etc/systemd/system/startup.service
+
 CMD ["/usr/sbin/init"]
 
-# TODO: need to get it to run startup.sh 
+# # test to see if startup service works
+# systemctl enable startup
+# systemctl start startup
+# ls /
+# # if you see foobar, it failed
