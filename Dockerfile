@@ -339,6 +339,8 @@ EXPOSE 22
 # startup service to create user, etc
 COPY startup.service /etc/systemd/system/startup.service
 
+RUN systemctl enable startup
+
 CMD ["/usr/sbin/init"]
 
 # # test to see if startup service works
