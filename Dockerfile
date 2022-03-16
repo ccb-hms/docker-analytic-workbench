@@ -316,10 +316,10 @@ RUN update-rc.d rstudio-server defaults
 # Final odds and ends
 #------------------------------------------------------------------------------
 
-# Copy startup script
-RUN mkdir /startup
-COPY startup.sh /startup/startup.sh
-RUN chmod 700 /startup/startup.sh
+# Copy userconfig script
+RUN mkdir /userconfig
+COPY userconfig.sh /userconfig/userconfig.sh
+RUN chmod 700 /userconfig/userconfig.sh
 
 # Create a mount point for host filesystem data
 RUN mkdir /HostData
@@ -337,14 +337,14 @@ RUN systemctl enable ssh.service
 EXPOSE 22
 
 # startup service to create user, etc
-COPY startup.service /etc/systemd/system/startup.service
+COPY userconfig.service /etc/systemd/system/userconfig.service
 
-RUN systemctl enable startup
+RUN systemctl enable userconfig
 
 CMD ["/usr/sbin/init"]
 
 # # test to see if startup service works
-# systemctl enable startup
-# systemctl start startup
+# systemctl enable userconfig
+# systemctl start userconfig
 # ls /
 # # if you see foobar, it failed

@@ -4,7 +4,7 @@ After=network.target
 StartLimitIntervalSec=0
 [Service]
 Type=simple
-ExecStart=/bin/bash -c '/startup/startup.sh'
+ExecStart=/bin/bash -c '/userconfig/userconfig.sh'
 
 [Install]
 WantedBy=multi-user.target
