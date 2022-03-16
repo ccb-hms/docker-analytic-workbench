@@ -20,16 +20,16 @@ else
     usermod -a -G rstudio-users $CONTAINER_USER_USERNAME
 fi
 
-# ACCEPT_EULA needs to be set to 'Y'
-# and SA_PASSWORD needs to be not null (actually needs to pass complexity requirements, but not testing here)
-# to run SQL Server
-if [[ $ACCEPT_EULA == "Y" && ! -z $SA_PASSWORD ]]
-then
-	runuser -m -p  mssql -c '/opt/mssql/bin/sqlservr &'
-fi
+# # ACCEPT_EULA needs to be set to 'Y'
+# # and SA_PASSWORD needs to be not null (actually needs to pass complexity requirements, but not testing here)
+# # to run SQL Server
+# if [[ $ACCEPT_EULA == "Y" && ! -z $SA_PASSWORD ]]
+# then
+# 	runuser -m -p  mssql -c '/opt/mssql/bin/sqlservr &'
+# fi
 
 # start RStudio Server
-/usr/sbin/rstudio-server restart
+rstudio-server restart
 
 # start sshd
 /usr/sbin/sshd -D
