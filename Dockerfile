@@ -275,34 +275,7 @@ RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/SqlTo
 RUN chmod -R 777 $R_HOME/library
 RUN chmod -R 777 $R_HOME/doc/html/packages.html
 
-
-# #------------------------------------------------------------------------------
-# # Install and configure RStudio Server
-# #------------------------------------------------------------------------------
-
-# RUN mkdir /opt/rstudioserver
-# WORKDIR /opt/rstudioserver
-
-# RUN wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl1.0/libssl1.0.0_1.0.2n-1ubuntu5.6_amd64.deb
-# RUN dpkg -i ./libssl1.0.0_1.0.2n-1ubuntu5.6_amd64.deb
-
-# RUN apt-get update && apt-get install -y gdebi-core
-
-# # older RStudio version (try to deal with name / pwd prompt from git credential manager):
-# # 1.2 works, later versions require modifying the GIT_ASKPASS environment variable
-# # to suppress a prompt in R
-# # RUN wget https://download2.rstudio.org/server/trusty/amd64/rstudio-server-1.2.5042-amd64.deb
-# # RUN gdebi -n rstudio-server-1.2.5042-amd64.deb
-
-# RUN wget https://download2.rstudio.org/server/bionic/amd64/rstudio-server-1.4.1106-amd64.deb
-# RUN gdebi --non-interactive rstudio-server-1.4.1106-amd64.deb
-
-# # Copy RStudio Config
-# COPY rserver.conf /etc/rstudio/rserver.conf
-
-#------------------------------------------------------------------------------
-
-# # attempt build rstudio server from source
+# build rstudio server from source
 WORKDIR /tmp
 RUN wget https://github.com/rstudio/rstudio/tarball/v2022.02.0+443
 RUN tar zxvf v2022.02.0+443
@@ -350,7 +323,9 @@ EXPOSE 22
 
 CMD ["/usr/sbin/init"]
 
-
+# this seems to work as long as "Use the new Virtualization framework" is not enabled in Docker settings
+#
+# docker buildx build --platform linux/aarch64,linux/amd64 --progress=plain --push --tag "hmsccb/analytic-workbench:multiarch-dev" .
 # docker run --platform linux/arm64 --rm --name 4ce -d -v /tmp:/HostData \
 # 	--privileged \
 # 	-p 8787:8787 \
