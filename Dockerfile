@@ -37,7 +37,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
 	&& apt-get install \
 		-y \
-		#--no-install-recommends \
 		ca-certificates \
 		curl \
 		less \
@@ -121,12 +120,6 @@ RUN git config --system credential.helper 'cache --timeout 86400'
 # Install and configure database connectivity components
 #------------------------------------------------------------------------------
 
-# # install MS SQL Server ODBC driver -- not available for ARM64
-# RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-# 	&& echo "deb [arch=amd64] https://packages.microsoft.com/ubuntu/18.04/prod bionic main" | tee /etc/apt/sources.list.d/mssql-release.list \
-# 	&& apt-get update \
-# 	&& ACCEPT_EULA=Y apt-get install msodbcsql17
-
 # install FreeTDS driver
 WORKDIR /tmp
 RUN wget ftp://ftp.freetds.org/pub/freetds/stable/freetds-1.1.40.tar.gz
@@ -139,6 +132,13 @@ RUN echo '\n\
 [FreeTDS]\n\
 Driver = /usr/local/lib/libtdsodbc.so \n\
 ' >> /etc/odbcinst.ini
+
+# # Not available for ARM64 / M1 for Linux:
+# # install MS SQL Server ODBC driver
+# RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+# 	&& echo "deb [arch=amd64] https://packages.microsoft.com/ubuntu/18.04/prod bionic main" | tee /etc/apt/sources.list.d/mssql-release.list \
+# 	&& apt-get update \
+# 	&& ACCEPT_EULA=Y apt-get install msodbcsql17
 
 # # install Oracle Instant Client and Oracle ODBC driver -- needs updating to condition on CPU architecture
 # ARG ORACLE_RELEASE=18
@@ -188,7 +188,9 @@ ENV R_HOME=/usr/local/lib/R
 WORKDIR /tmp
 RUN wget https://cran.r-project.org/src/base/R-4/R-$R_VERSION.tar.gz
 RUN tar zxvf R-$R_VERSION.tar.gz
-RUN cd R-$R_VERSION && ./configure -with-blas -with-lapack --enable-R-shlib && make && make install
+# figure out how many cores we should use for compile, and call make -j to do multithreaded build
+RUN ["/bin/bash", "-c", "x=$(cat /proc/cpuinfo | grep processor | wc -l) && let ncores=$x-1 && if (( ncores < 1 )); then let ncores=1; fi && echo \"export NMAKECORES=\"$ncores >> /tmp/ncores.txt"]
+RUN ["/bin/bash", "-c", "source /tmp/ncores.txt && cd R-$R_VERSION && ./configure -with-blas -with-lapack --enable-R-shlib && make -j $NMAKECORES && make install"]
 
 # Clean up downloaded files
 WORKDIR /tmp
@@ -198,9 +200,34 @@ RUN rm -r /tmp/R-$R_VERSION*
 ENV R_REPOSITORY=https://cran.microsoft.com/snapshot/2022-03-15
 RUN echo 'options(repos = c(CRAN = "'$R_REPOSITORY'"))' >> $R_HOME/etc/Rprofile.site
 
+# enable multithreaded build for R packages
+RUN echo 'options(Ncpus = max(c(parallel::detectCores()-1, 1)))' >> $R_HOME/etc/Rprofile.site
+
 # tell R to use wget (devtools::install_github aimed at HTTPS connections had problems with libcurl)
 RUN echo 'options("download.file.method" = "wget")' >> $R_HOME/etc/Rprofile.site
 RUN Rscript -e "install.packages(c('curl', 'httr'))"
+
+
+#------------------------------------------------------------------------------
+# Install RStudio Server
+#------------------------------------------------------------------------------
+
+WORKDIR /tmp
+RUN wget https://github.com/rstudio/rstudio/tarball/v2022.02.0+443
+RUN tar zxvf v2022.02.0+443
+RUN cd /tmp/rstudio-rstudio-9f79693/dependencies/linux && ./install-dependencies-focal 
+RUN cd /tmp/rstudio-rstudio-9f79693 && mkdir build 
+# figure out how many cores we should use for compile, and call cmake / make -j to do multithreaded build
+RUN ["/bin/bash", "-c", "source /tmp/ncores.txt && cd /tmp/rstudio-rstudio-9f79693/build  && cmake -j $NMAKECORES .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release"]
+RUN ["/bin/bash", "-c", "source /tmp/ncores.txt && cd /tmp/rstudio-rstudio-9f79693/build && make -j $NMAKECORES install"]
+RUN useradd -r rstudio-server
+
+RUN cp /usr/local/extras/init.d/debian/rstudio-server /etc/init.d/
+RUN update-rc.d rstudio-server defaults
+
+# tell R to use cairo for graphics so it works in RStudio Server front end
+RUN echo 'options(bitmapType="cairo")' >> $R_HOME/etc/Rprofile.site
+
 
 #------------------------------------------------------------------------------
 # Install R packages
@@ -262,49 +289,18 @@ RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/FactT
 RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/MsSqlTools.git', ref='v1.0.0')"
 RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/SqlTools.git', ref='v1.0.0')"
 
-# # the following steps are needed for Roracle package
-# RUN mkdir $ORACLE_HOME/rdbms \
-#     && mkdir $ORACLE_HOME/rdbms/public 
-# RUN cp /usr/include/oracle/${ORACLE_RELEASE}.${ORACLE_UPDATE}/client64/* $ORACLE_HOME/rdbms/public \
-#     && chmod -R 777  $ORACLE_HOME/rdbms/public
+# # # the following steps are needed for Roracle package
+# # RUN mkdir $ORACLE_HOME/rdbms \
+# #     && mkdir $ORACLE_HOME/rdbms/public 
+# # RUN cp /usr/include/oracle/${ORACLE_RELEASE}.${ORACLE_UPDATE}/client64/* $ORACLE_HOME/rdbms/public \
+# #     && chmod -R 777  $ORACLE_HOME/rdbms/public
 
-# # install ROracle
-# RUN Rscript -e "remotes::install_cran('ROracle')" 
+# # # install ROracle
+# # RUN Rscript -e "remotes::install_cran('ROracle')" 
 
  # allow modification of these locations so users can install R packages without warnings
 RUN chmod -R 777 $R_HOME/library
 RUN chmod -R 777 $R_HOME/doc/html/packages.html
-
-# build rstudio server from source
-WORKDIR /tmp
-RUN wget https://github.com/rstudio/rstudio/tarball/v2022.02.0+443
-RUN tar zxvf v2022.02.0+443
-RUN cd /tmp/rstudio-rstudio-9f79693/dependencies/linux && ./install-dependencies-focal 
-RUN cd /tmp/rstudio-rstudio-9f79693 && mkdir build 
-RUN cd /tmp/rstudio-rstudio-9f79693/build  && cmake .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release
-RUN cd /tmp/rstudio-rstudio-9f79693/build && make install
-RUN useradd -r rstudio-server
-
-RUN cp /usr/local/extras/init.d/debian/rstudio-server /etc/init.d/
-RUN update-rc.d rstudio-server defaults
-
-# tell R to use cairo for graphics so it works in RStudio Server front end
-RUN echo 'options(bitmapType="cairo")' >> $R_HOME/etc/Rprofile.site
-
-#------------------------------------------------------------------------------
-# Create a service to set up user / password passed at runtime
-#------------------------------------------------------------------------------
-
-# Copy userconfig script
-RUN mkdir /userconfig
-COPY userconfig.sh /userconfig/userconfig.sh
-RUN chmod 700 /userconfig/userconfig.sh
-
-# create service to create user, etc
-COPY userconfig.service /etc/systemd/system/userconfig.service
-
-# enable the service to create the user, etc.
-RUN systemctl enable userconfig
 
 #------------------------------------------------------------------------------
 # Final odds and ends
@@ -318,10 +314,14 @@ COPY krb5.conf /etc/krb5.conf
 
 # enable password authedtication over SSH
 RUN sed -i 's!^#PasswordAuthentication yes!PasswordAuthentication yes!' /etc/ssh/sshd_config
-RUN systemctl enable ssh.service
 EXPOSE 22
 
-CMD ["/usr/sbin/init"]
+# Copy startup script
+RUN mkdir /startup
+COPY startup.sh /startup/startup.sh
+RUN chmod 700 /startup/startup.sh
+
+CMD ["/startup/startup.sh"]
 
 # this seems to work as long as "Use the new Virtualization framework" is not enabled in Docker settings
 #
@@ -333,9 +333,3 @@ CMD ["/usr/sbin/init"]
 # 	-e CONTAINER_USER_USERNAME=test \
 # 	-e CONTAINER_USER_PASSWORD=test \
 # 	workbench-multiarch-debug
-
-# # test to see if startup service works
-# systemctl enable userconfig
-# systemctl start userconfig
-# ls /
-# # if you see foobar, it failed
