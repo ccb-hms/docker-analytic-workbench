@@ -189,8 +189,8 @@ WORKDIR /tmp
 RUN wget https://cran.r-project.org/src/base/R-4/R-$R_VERSION.tar.gz
 RUN tar zxvf R-$R_VERSION.tar.gz
 # figure out how many cores we should use for compile, and call make -j to do multithreaded build
-RUN ["/bin/bash", "-c", "x=$(cat /proc/cpuinfo | grep processor | wc -l) && let ncores=$x-1 && if (( ncores < 1 )); then let ncores=1; fi && echo \"export NMAKECORES=\"$ncores >> /tmp/ncores.txt"]
-RUN ["/bin/bash", "-c", "source /tmp/ncores.txt && cd R-$R_VERSION && ./configure -with-blas -with-lapack --enable-R-shlib && make -j $NMAKECORES && make install"]
+RUN ["/bin/bash", "-c", "x=$(cat /proc/cpuinfo | grep processor | wc -l) && let ncores=$x-1 && if (( ncores < 1 )); then let ncores=1; fi && echo \"export N_BUILD_CORES=\"$ncores >> /tmp/ncores.txt"]
+RUN ["/bin/bash", "-c", "source /tmp/ncores.txt && cd R-$R_VERSION && ./configure -with-blas -with-lapack --enable-R-shlib && make -j $N_BUILD_CORES && make install"]
 
 # Clean up downloaded files
 WORKDIR /tmp
@@ -206,27 +206,6 @@ RUN echo 'options(Ncpus = max(c(parallel::detectCores()-1, 1)))' >> $R_HOME/etc/
 # tell R to use wget (devtools::install_github aimed at HTTPS connections had problems with libcurl)
 RUN echo 'options("download.file.method" = "wget")' >> $R_HOME/etc/Rprofile.site
 RUN Rscript -e "install.packages(c('curl', 'httr'))"
-
-
-#------------------------------------------------------------------------------
-# Install RStudio Server
-#------------------------------------------------------------------------------
-
-WORKDIR /tmp
-RUN wget https://github.com/rstudio/rstudio/tarball/v2022.02.0+443
-RUN tar zxvf v2022.02.0+443
-RUN cd /tmp/rstudio-rstudio-9f79693/dependencies/linux && ./install-dependencies-focal 
-RUN cd /tmp/rstudio-rstudio-9f79693 && mkdir build 
-# figure out how many cores we should use for compile, and call cmake / make -j to do multithreaded build
-RUN ["/bin/bash", "-c", "source /tmp/ncores.txt && cd /tmp/rstudio-rstudio-9f79693/build  && cmake -j $NMAKECORES .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release"]
-RUN ["/bin/bash", "-c", "source /tmp/ncores.txt && cd /tmp/rstudio-rstudio-9f79693/build && make -j $NMAKECORES install"]
-RUN useradd -r rstudio-server
-
-RUN cp /usr/local/extras/init.d/debian/rstudio-server /etc/init.d/
-RUN update-rc.d rstudio-server defaults
-
-# tell R to use cairo for graphics so it works in RStudio Server front end
-RUN echo 'options(bitmapType="cairo")' >> $R_HOME/etc/Rprofile.site
 
 
 #------------------------------------------------------------------------------
@@ -298,13 +277,35 @@ RUN Rscript -e "devtools::install_github('https://github.com/nathan-palmer/SqlTo
 # # # install ROracle
 # # RUN Rscript -e "remotes::install_cran('ROracle')" 
 
- # allow modification of these locations so users can install R packages without warnings
-RUN chmod -R 777 $R_HOME/library
-RUN chmod -R 777 $R_HOME/doc/html/packages.html
+
+#------------------------------------------------------------------------------
+# Install RStudio Server
+#------------------------------------------------------------------------------
+
+WORKDIR /tmp
+RUN wget https://github.com/rstudio/rstudio/tarball/v2022.02.0+443
+RUN tar zxvf v2022.02.0+443
+RUN cd /tmp/rstudio-rstudio-9f79693/dependencies/linux && ./install-dependencies-focal 
+RUN cd /tmp/rstudio-rstudio-9f79693 && mkdir build 
+# figure out how many cores we should use for compile, and call cmake / make -j to do multithreaded build
+RUN ["/bin/bash", "-c", "source /tmp/ncores.txt && cd /tmp/rstudio-rstudio-9f79693/build  && cmake -j $N_BUILD_CORES .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release"]
+RUN ["/bin/bash", "-c", "source /tmp/ncores.txt && cd /tmp/rstudio-rstudio-9f79693/build && make -j $N_BUILD_CORES install"]
+RUN useradd -r rstudio-server
+
+RUN cp /usr/local/extras/init.d/debian/rstudio-server /etc/init.d/
+RUN update-rc.d rstudio-server defaults
+
+# tell R to use cairo for graphics so it works in RStudio Server front end
+RUN echo 'options(bitmapType="cairo")' >> $R_HOME/etc/Rprofile.site
+
 
 #------------------------------------------------------------------------------
 # Final odds and ends
 #------------------------------------------------------------------------------
+
+# allow modification of these locations so users can install R packages without warnings
+RUN chmod -R 777 $R_HOME/library
+RUN chmod -R 777 $R_HOME/doc/html/packages.html
 
 # Create a mount point for host filesystem data
 RUN mkdir /HostData
