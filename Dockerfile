@@ -326,11 +326,12 @@ CMD ["/startup/startup.sh"]
 
 # this seems to work as long as "Use the new Virtualization framework" is not enabled in Docker settings
 #
-# docker buildx build --platform linux/aarch64,linux/amd64 --progress=plain --push --tag "hmsccb/analytic-workbench:multiarch-dev" .
-# docker run --platform linux/arm64 --rm --name 4ce -d -v /tmp:/HostData \
-# 	--privileged \
-# 	-p 8787:8787 \
-# 	-p 2200:22 \
-# 	-e CONTAINER_USER_USERNAME=test \
-# 	-e CONTAINER_USER_PASSWORD=test \
-# 	workbench-multiarch-debug
+# set up distributed buildx build with both AMD64 and ARM64 nodes
+# docker buildx build --no-cache --platform linux/arm64,linux/amd64 --progress=plain --push --tag "hmsccb/analytic-workbench:multiarch-dev-no-systemd-buildx-native-nodes" .
+# 
+# docker run --rm --name workbench -d -v /tmp:/HostData \
+#         -p 8787:8787 \
+#         -p 2200:22 \
+#         -e CONTAINER_USER_USERNAME=test \
+#         -e CONTAINER_USER_PASSWORD=test \
+#         hmsccb/analytic-workbench:multiarch-dev-no-systemd-buildx-native-nodes
