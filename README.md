@@ -1,5 +1,5 @@
 # CCB Analytic Workbench
-This document describes the intended use of the CCB Analytic Workbench Docker image.  The container is preconfigured with R and Python and supporting packages, and is intended to serve as a base configuration for CCB's interactive analytic workbench.  It is preconfigured with RStudio Server, which runs at startup, along with an SSH server.  X11 is supported for graphical applications.  Microsoft SQL Server is also included, and can be optionally run at startup (see below).
+This is a repository for multi-arch (AMD64 / ARM64) CCB Analytic Workbench Docker images preconfigured with R and Python, including RStudio Server, which runs at startup, SSH server, and X11.
 
 # Table of Contents
 
@@ -20,18 +20,15 @@ docker \
         -v /SOME_LOCAL_PATH:/HostData \
         -p 8787:8787 \
         -p 2200:22 \
-        -p 1433:1433 \
         -e 'CONTAINER_USER_USERNAME=user' \
         -e 'CONTAINER_USER_PASSWORD=password' \
-        -e 'ACCEPT_EULA=Y' \
-        -e 'SA_PASSWORD=yourStrong(!)Password' \
-        hmsccb/analytic-workbench:version-1.3.0
+        hmsccb/analytic-workbench:version-2.0.0
 ```
 
 Alternatively, clone the Git repository and:
 
 ```bash
-docker build --progress=plain --tag hmsccb/analyticworkbench:development .
+docker build --progress=plain --tag analytic-workbench-dev .
 
 docker \
     run \
@@ -41,12 +38,9 @@ docker \
         -v /SOME_LOCAL_PATH:/HostData \
         -p 8787:8787 \
         -p 2200:22 \
-        -p 1433:1433 \
         -e 'CONTAINER_USER_USERNAME=user' \
         -e 'CONTAINER_USER_PASSWORD=password' \
-        -e 'ACCEPT_EULA=Y' \
-        -e 'SA_PASSWORD=yourStrong(!)Password' \
-        hmsccb/analytic-workbench:development
+        analytic-workbench-dev
 ```
 
 
@@ -60,13 +54,9 @@ docker \
 
 These are the username and password that will be created on the container. These credentials will be used to connect the running container via ssh, or to log into the R Studio Server Web UI.
 
-### Environment Variables ACCEPT_EULA and SA_PASSWORD
-
-This image is built on top of Microsoft's official container image for SQL Server on Linux. These arguments control configuration of the SQL Server instance. In order to start an instance of SQL Server in the container, ACCEPT_EULA must be set to "Y" and SA_PASSWORD must be set to a password of your choosing for the SQL Server 'sa' account meeting minimum complexity requirements.  See https://hub.docker.com/_/microsoft-mssql-server for details.  If either of these conditions is not met, the container will run, but the SQL Server process will not start.
-
 ### Port Mapping
 
-The ``-p`` flag to Docker maps a TCP port in the container to a TCP port on the Docker host.  More information is available [here](https://docs.docker.com/config/containers/container-networking/).  For example, in the above invocation, we are mapping TCP 8787 in the container to TCP 8787 on the Docker host, and TCP 22 (ssh) in the container to TCP 2200 on the Docker host.  This allows the user to connect to the container by ssh'ing to ``localhost`` on port 2200, or aiming a web browser at port 8787 on ``localhost`` to connect to R Studio Server.  More information is available in [Connecting to the Container](#3.-Connecting-to-the-Container).  TCP 1433 in the container is being mapped to TCP 1433 on the Docker host to allow connectivity to SQL Server.
+The ``-p`` flag to Docker maps a TCP port in the container to a TCP port on the Docker host.  More information is available [here](https://docs.docker.com/config/containers/container-networking/).  For example, in the above invocation, we are mapping TCP 8787 in the container to TCP 8787 on the Docker host, and TCP 22 (ssh) in the container to TCP 2200 on the Docker host.  This allows the user to connect to the container by ssh'ing to ``localhost`` on port 2200, or aiming a web browser at port 8787 on ``localhost`` to connect to R Studio Server.  More information is available in [Connecting to the Container](#3.-Connecting-to-the-Container).
 
 ### Mounting Network Shares
 
@@ -169,20 +159,5 @@ connect to the container.
 A final option is to run the container in a way that directly presents the user with an interactive R session. The container will stop after you quit this R session. Note, this command runs the container so you can't already have one running when issuing it. The --rm flag will ensure that when the R session is quit, the container is stopped and cleaned up.
 
 ```bash
-docker run --name workbench -v /SOME_LOCAL_PATH:/HostData --rm -it hmsccb/AnalyticWorkbench:latest R
-```
-
-## Connecting to SQL Server
-
-As noted above, if the environment variables ``ACCEPT_EULA`` and ``SA_PASSWORD`` are appropriately set, an instance of SQL Server will be executed in the container.  The port mapping provided by ``-p 1433:1433`` will allow any standard SQL Server / ODBC client tools to connect to the SQL Server instance at port 1433 on the Docker host.
-
-
-# Restarting R Studio Server
-
-R Studio Utility is installed in /usr/sbin
-
-If you need to restart rstudio server inside the container (e.g., because it becomes unresponsive)
-
-```bash
-/usr/sbin/rstudio-server restart
+docker run --name workbench -v /SOME_LOCAL_PATH:/HostData --rm -it hmsccb/analytic-workbench:latest R
 ```

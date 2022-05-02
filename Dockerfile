@@ -4,7 +4,7 @@
 # Copyright: Harvard Medical School
 #
 
-FROM hmsccb/rstudio-server
+FROM hmsccb/rstudio-server:4.2.0
 
 #------------------------------------------------------------------------------
 # Install R packages
@@ -15,7 +15,7 @@ RUN Rscript -e "remotes::install_cran('shiny')"
 
 # install BioConductor
 RUN Rscript -e "if (!requireNamespace('BiocManager', quietly = TRUE)) remotes::install_cran('BiocManager')"
-RUN Rscript -e "BiocManager::install(version = '3.14', update=FALSE, ask=FALSE)"
+RUN Rscript -e "BiocManager::install(version = '3.15', update=FALSE, ask=FALSE)"
 
 # install standard data science and bioinformatics packages
 RUN Rscript -e "remotes::install_cran('DBI')"
